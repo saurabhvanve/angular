@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AngularJS Dynamic Form and Data Table</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        img {
+            max-width: 50px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body ng-app="dynamicFormApp" ng-controller="FormController">
+
+    <h2>Dynamic Form</h2>
+    <form name="userForm" ng-submit="saveUser()" novalidate>
+        <div>
+            <label>Name:</label>
+            <input type="text" ng-model="user.name" required>
+        </div>
+
+        <div>
+            <label>Phone:</label>
+            <input type="text" ng-model="user.phone" ng-pattern="/^[0-9]*$/" required>
+        </div>
+
+        <div>
+            <label>ID Number:</label>
+            <input type="text" ng-model="user.idNumber" required>
+        </div>
+
+        <div>
+            <label>Picture:</label>
+            <input type="file" accept="image/*" onchange="angular.element(this).scope().onFileChange(event)">
+            <div ng-if="user.picture">
+                <img ng-src="{{user.picture}}" alt="Preview">
+            </div>
+        </div>
+
+        <button type="submit" ng-disabled="userForm.$invalid">{{ editIndex === -1 ? 'Save' : 'Update' }}</button>
+    </form>
+
+    <h3>User Entries</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>ID Number</th>
+                <th>Picture</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="user in users">
+                <td>{{ user.name }}</td>
+                <td>{{ user.phone }}</td>
+                <td>{{ user.idNumber }}</td>
+                <td><img ng-src="{{ user.picture }}" alt="Picture"></td>
+                <td>
+                    <button ng-click="editUser($index)">Edit</button>
+                    <button ng-click="deleteUser($index)">Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        var app = angular.module('dynamicFormApp', []);
+
+        app.controller('FormController', function($scope) {
+            $scope.users = [];
+            $scope.user = {};
+            $scope.editIndex = -1;
+
+            $scope.onFileChange = function(event) {
+                var reader = new FileReader();
+                var file = event.target.files[0];
+                if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+                    reader.onload = function(e) {
+                        $scope.$apply(function() {
+                            $scope.user.picture = e.target.result;
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Invalid image format. Only JPEG and PNG are allowed.');
+                }
+            };
+
+            $scope.saveUser = function() {
+                if ($scope.editIndex === -1) {
+                    // Add new user
+                    $scope.users.push(angular.copy($scope.user));
+                } else {
+                    // Update existing user
+                    $scope.users[$scope.editIndex] = angular.copy($scope.user);
+                    $scope.editIndex = -1;
+                }
+                $scope.user = {};
+            };
+
+            $scope.editUser = function(index) {
+                $scope.editIndex = index;
+                $scope.user = angular.copy($scope.users[index]);
+            };
+
+            $scope.deleteUser = function(index) {
+                $scope.users.splice(index, 1);
+            };
+        });
+    </script>
+
+</body>
+</html>
